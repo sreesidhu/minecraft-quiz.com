@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Minecraft Quiz Madness</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Press Start 2P', cursive;
+  overflow:hidden;
+  color:white;
+  text-align:center;
+  background: linear-gradient(270deg,#000,#111,#222,#000);
+  background-size: 800% 800%;
+  animation: bgFlow 20s ease infinite;
+}
+
+@keyframes bgFlow {
+  0%{background-position:0% 50%;}
+  50%{background-position:100% 50%;}
+  100%{background-position:0% 50%;}
+}
+
+h1 {
+  font-size:28px;
+  margin-top:20px;
+  text-shadow: 0 0 20px #00ff00,0 0 40px #0ff;
+  animation: textPulse 2s infinite alternate;
+}
+@keyframes textPulse{
+  0%{text-shadow:0 0 20px #00ff00,0 0 40px #0ff; transform:rotate(-1deg);}
+  100%{text-shadow:0 0 40px #0ff,0 0 60px #00ff00; transform:rotate(1deg);}
+}
+
+#quiz-box{
+  background:rgba(0,0,0,0.6);
+  border:4px solid #0ff;
+  border-radius:20px;
+  padding:30px;
+  margin:20px auto;
+  width:80%;
+  max-width:700px;
+  box-shadow:0 0 30px #0ff,0 0 50px #0f0 inset;
+  animation: floatBox 4s ease-in-out infinite;
+}
+@keyframes floatBox{
+  0%,100%{transform:translateY(0);}
+  50%{transform:translateY(-15px);}
+}
+
+#level{
+  font-size:14px;
+  margin-bottom:10px;
+  color:#ff0;
+  animation:flicker 2s infinite;
+}
+@keyframes flicker{
+  0%,19%,21%,23%,25%,54%,56%,100%{opacity:1;}
+  20%,24%,55%{opacity:0.3;}
+}
+
+button{
+  display:block;
+  margin:15px auto;
+  padding:12px 30px;
+  font-family:'Press Start 2P', cursive;
+  font-size:12px;
+  border:2px solid #0ff;
+  background:black;
+  color:#0ff;
+  cursor:pointer;
+  border-radius:10px;
+  box-shadow:0 0 10px #0ff;
+  transition:0.3s;
+  animation: neonPulse 3s infinite;
+}
+@keyframes neonPulse{
+  0%,100%{box-shadow:0 0 10px #0ff; transform:scale(1);}
+  50%{box-shadow:0 0 25px #0ff,0 0 40px #0ff; transform:scale(1.1);}
+}
+button:hover{
+  background:#0ff;
+  color:black;
+  transform:scale(1.2) rotate(2deg);
+  box-shadow:0 0 50px #0ff;
+}
+
+#message{
+  font-size:14px;
+  min-height:20px;
+  margin-top:15px;
+  animation:msgFade 1s ease;
+}
+@keyframes msgFade{
+  from{opacity:0; transform:scale(0.8);}
+  to{opacity:1; transform:scale(1);}
+}
+
+.levelup{
+  position:fixed;
+  top:40%;
+  left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  font-size:30px;
+  color:#0ff;
+  text-shadow:0 0 20px #0ff,0 0 40px #0f0;
+  animation:popUp 1s ease forwards;
+  pointer-events:none;
+}
+@keyframes popUp{
+  0%{transform:translate(-50%,-50%) scale(0); opacity:0;}
+  50%{transform:translate(-50%,-50%) scale(1.5); opacity:1;}
+  100%{transform:translate(-50%,-50%) scale(1); opacity:0;}
+}
+
+@keyframes shake{
+  0%{transform:translate(1px,1px) rotate(0deg);}
+  10%{transform:translate(-1px,-2px) rotate(-1deg);}
+  20%{transform:translate(-3px,0px) rotate(1deg);}
+  30%{transform:translate(3px,2px) rotate(0deg);}
+  40%{transform:translate(1px,-1px) rotate(1deg);}
+  50%{transform:translate(-1px,2px) rotate(-1deg);}
+  60%{transform:translate(-3px,1px) rotate(0deg);}
+  70%{transform:translate(3px,1px) rotate(-1deg);}
+  80%{transform:translate(-1px,-1px) rotate(1deg);}
+  90%{transform:translate(1px,2px) rotate(0deg);}
+  100%{transform:translate(1px,-2px) rotate(-1deg);}
+}
+
+canvas{position:fixed; top:0; left:0; z-index:-1;}
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<h1>💎 Ultimate Minecraft Quiz 💥</h1>
+<div id="level">Level 1</div>
+<div id="quiz-box">
+  <p id="question">Loading question...</p>
+  <div id="answers"></div>
+  <div id="message"></div>
+</div>
+
+<script>
+// 100 unique Minecraft questions
+const quizData = [
+["What is needed to craft a torch?", ["Stick + Coal","Wood + Iron","Stone + Redstone","Sand + Charcoal"],0],
+["Which mob explodes near players?", ["Zombie","Skeleton","Creeper","Spider"],2],
+["What do you need to enter the Nether?", ["Iron Block","Portal Frame","Obsidian + Flint and Steel","Redstone"],2],
+["Which mob drops bones and arrows?", ["Skeleton","Creeper","Zombie","Enderman"],0],
+["Which food restores most hunger?", ["Carrot","Steak","Bread","Apple"],1],
+["What is Steve’s female counterpart?", ["Sarah","Ella","Alex","Lily"],2],
+["What block burns forever?", ["Coal Block","Netherrack","Obsidian","Wood"],1],
+["How many hearts does a player have?", ["5","10","20","15"],1],
+["Which dimension has End Cities?", ["Overworld","Nether","End","Sky"],2],
+["What mob trades with emeralds?", ["Creeper","Zombie","Villager","Piglin"],2],
+["What do bees make?", ["Wax","Honey","Slime","Bread"],1],
+["Which block glows?", ["Stone","Glowstone","Dirt","Sand"],1],
+["What is used to tame a wolf?", ["Fish","Bone","Carrot","Meat"],1],
+["Which item repairs tools?", ["Anvil","Grindstone","Smithing Table","Crafting Table"],1],
+["Which biome has snow?", ["Desert","Plains","Taiga","Savanna"],2],
+["What’s needed for Nether Portal?", ["Obsidian","Gold","Stone","Lava"],0],
+["What drops string?", ["Spider","Skeleton","Zombie","Slime"],0],
+["What block is unbreakable in Survival?", ["Obsidian","Bedrock","End Portal","Barrier"],1],
+["What can cure a zombie villager?", ["Milk","Golden Apple + Weakness","Potion of Healing","Bread"],1],
+["Which mob drops gunpowder?", ["Zombie","Creeper","Skeleton","Enderman"],1],
+["How many eyes needed for End Portal?", ["10","12","14","8"],1],
+["Which armor is strongest?", ["Iron","Gold","Netherite","Diamond"],2],
+["What tool mines diamonds?", ["Wooden Pickaxe","Stone Pickaxe","Iron Pickaxe","Gold Pickaxe"],2],
+["What animal gives leather?", ["Pig","Cow","Sheep","Chicken"],1],
+["What do you get from smelting sand?", ["Glass","Stone","Iron","Clay"],0],
+["What block can float?", ["Sand","Dirt","Gravel","Concrete"],1],
+["Which mob can teleport?", ["Zombie","Creeper","Enderman","Spider"],2],
+["What is used to craft arrows?", ["Stick + Feather + Flint","Iron + String","Stone + Stick","Coal + Feather"],0],
+["What item lights a Nether Portal?", ["Torch","Flint and Steel","Fire Charge","Lighter"],1],
+["How do you sleep?", ["Sit","Lie on Bed","Press Shift","Right-click Bed"],3],
+["What food do pigs love?", ["Wheat","Carrot","Seeds","Sugar"],1],
+["Which block can’t be pushed by pistons?", ["Obsidian","Sand","Glass","Wool"],0],
+["What mob drops ender pearls?", ["Skeleton","Enderman","Creeper","Pig"],1],
+["What’s the boss of the Nether?", ["Wither","Ender Dragon","Warden","Piglin Chief"],0],
+["What do you use to mine faster underwater?", ["Potion of Speed","Aqua Affinity","Depth Strider","Respiration"],1],
+["Which structure spawns in jungles?", ["Mansion","Temple","Fortress","Village"],1],
+["What block can redstone power?", ["Glass","Wood","Stone","Gold"],2],
+["Which fish is useless when eaten raw?", ["Pufferfish","Cod","Salmon","Tropical"],0],
+["What do phantoms drop?", ["Feathers","Membranes","Bones","Leather"],1],
+["Which potion gives fire resistance?", ["Fire Potion","Lava Shield","Fire Resistance","Heat Guard"],2],
+["What is used to grow crops faster?", ["Water","Sunlight","Bonemeal","Dirt"],2],
+["What color is Enderman’s eyes?", ["Green","Purple","Red","Blue"],1],
+["How do you get obsidian?", ["Mine Lava","Water + Lava","Craft","Smelt"],1],
+["Which structure contains blazes?", ["End City","Jungle Temple","Nether Fortress","Village"],2],
+["What’s the height limit?", ["128","256","512","1024"],1],
+["What do you trade with Piglins?", ["Emeralds","Gold","Iron","Copper"],1],
+["Which mob lives underwater?", ["Drowned","Zombie","Skeleton","Stray"],0],
+["What item resets spawn point?", ["Bed","Torch","Map","Compass"],0],
+["What do axolotls eat?", ["Fish","Squid","Slime","Salmon"],3],
+["What do villagers fear at night?", ["Zombies","Wolves","Endermen","Players"],0],
+["What crop grows in Nether?", ["Wheat","Nether Wart","Carrot","Potato"],1],
+["What do turtles drop?", ["Scutes","Shells","Eggs","Slime"],0],
+["Which tool breaks stone fastest?", ["Shovel","Pickaxe","Axe","Sword"],1],
+["What does smelting iron ore give?", ["Iron Ingot","Iron Block","Iron Nugget","Steel"],0],
+["What material makes beacons?", ["Iron","Emerald","Obsidian","Glass"],3],
+["What is used to ride pigs?", ["Carrot on a Stick","Saddle","Lead","Rope"],0],
+["Which mob can fly?", ["Phantom","Enderman","Creeper","Blaze"],0],
+["What happens in daylight to zombies?", ["Sleep","Explode","Burn","Freeze"],2],
+["Which mob drops ink?", ["Squid","Fish","Slime","Zombie"],0],
+["What is crafted from sugar cane?", ["Bread","Paper","Cookies","Book"],1],
+["What can you shear?", ["Cow","Sheep","Pig","Wolf"],1],
+["What do you need for fireworks?", ["Gunpowder + Paper","Fire Charge","Coal","Gold"],0],
+["Which boss is in The End?", ["Wither","Ender Dragon","Elder Guardian","Warden"],1],
+["Which mob drops slimeballs?", ["Zombie","Slime","Creeper","Spider"],1],
+["What food attracts chickens?", ["Seeds","Carrots","Fish","Bread"],0],
+["What tool chops trees fastest?", ["Pickaxe","Axe","Shovel","Sword"],1],
+["What does cactus drop?", ["Cactus Green","Sand","Prickles","Spikes"],0],
+["Which ore is green?", ["Emerald","Lapis","Diamond","Copper"],0],
+["Which mob guards ocean monuments?", ["Guardian","Drowned","Phantom","Zombie"],0],
+["What can villagers sleep on?", ["Floor","Bed","Chair","Hay Bale"],1],
+["Which block explodes when broken?", ["TNT","Sand","Gravel","Obsidian"],0],
+["What light level prevents mob spawn?", ["7+","10+","12+","15"],1],
+["Which block slows movement?", ["Soul Sand","Mud","Honey Block","All"],3],
+["What’s used to make bread?", ["Wheat","Corn","Seeds","Dough"],0],
+["Which mob drops leather?", ["Cow","Pig","Chicken","Rabbit"],0],
+["Which block can store XP?", ["Beacon","Amethyst","Bottle o' Enchanting","Ender Chest"],2],
+["Which structure generates in plains?", ["Village","Temple","Fortress","Shipwreck"],0],
+["What does Ender Dragon drop?", ["Egg","XP","Both","Nothing"],2],
+["What block is crafted with quartz?", ["Block of Quartz","Marble","White Wool","Snow"],0],
+["What animal lays eggs?", ["Chicken","Pig","Cow","Rabbit"],0],
+["What mob drops blaze rods?", ["Blaze","Wither","Ghast","Zombie"],0],
+["Which material makes glass bottles?", ["Sand","Glass","Stone","Clay"],1],
+["Which potion lets you breathe underwater?", ["Water Breathing","Aqua Potion","Dolphin","Oxygen"],0],
+["Which block can store redstone power?", ["Redstone Block","Repeater","Comparator","Quartz"],0],
+["What color are creeper particles?", ["Green","Blue","Red","Yellow"],0],
+["What do you find in desert temples?", ["Sand","TNT Trap","Diamonds","All"],3],
+["Which mob rides spiders sometimes?", ["Zombie","Skeleton","Creeper","Phantom"],1],
+["Which mob is passive?", ["Creeper","Enderman","Cow","Zombie"],2],
+["What tool do you use for dirt?", ["Pickaxe","Axe","Shovel","Sword"],2],
+["Which item repairs tridents?", ["Iron","Prismarine Crystals","Heart of the Sea","Copper"],1],
+["Which biome has cactus?", ["Plains","Desert","Snow","Jungle"],1],
+["What’s used to make golden apples?", ["Gold Blocks","Gold Ingots","Gold Nuggets","Golden Carrots"],1],
+["What do skeleton horses spawn in?", ["Thunderstorms","Night","Rain","Fog"],0],
+["What mob drops ghast tears?", ["Ghast","Blaze","Zombie","Phantom"],0],
+["What’s the rarest ore?", ["Emerald","Diamond","Gold","Lapis"],0],
+["Which mob lives in the End?", ["Zombie","Enderman","Blaze","Wither"],1],
+["What can Ender Dragon destroy?", ["Everything","End Stone","Iron","Obsidian"],1],
+["What enchantment increases mining speed?", ["Efficiency","Fortune","Mending","Unbreaking"],0],
+["Which tool breaks glass fastest?", ["Axe","Pickaxe","Sword","Hand"],3],
+["What mob can you milk?", ["Cow","Pig","Sheep","Rabbit"],0]
+];
+
+let currentLevel = 0;
+const usedQuestions = new Set();
+const questionEl = document.getElementById("question");
+const answersEl = document.getElementById("answers");
+const messageEl = document.getElementById("message");
+const levelEl = document.getElementById("level");
+
+function nextQuestion(){
+  if(usedQuestions.size === quizData.length){
+    questionEl.innerText="🏆 You completed all 100 Minecraft levels!";
+    answersEl.innerHTML="";
+    levelEl.innerText="Level MAX";
+    return;
+  }
+  let index;
+  do{
+    index=Math.floor(Math.random()*quizData.length);
+  }while(usedQuestions.has(index));
+  usedQuestions.add(index);
+  const [q,options,correct]=quizData[index];
+  questionEl.innerText=q;
+  answersEl.innerHTML="";
+  options.forEach((opt,i)=>{
+    const btn=document.createElement("button");
+    btn.innerText=opt;
+    btn.onclick=()=>checkAnswer(i===correct);
+    answersEl.appendChild(btn);
+  });
+}
+
+function checkAnswer(correct){
+  if(correct){
+    currentLevel++;
+    levelEl.innerText=`Level ${currentLevel}`;
+    showLevelUp();
+    createExplosion();
+    nextQuestion();
+  }else{
+    messageEl.innerText="❌ Wrong! Try again.";
+    document.body.style.animation="shake 0.5s";
+    setTimeout(()=>document.body.style.animation="",500);
+  }
+}
+
+function showLevelUp(){
+  messageEl.innerText="✅ Correct!";
+  const popup=document.createElement("div");
+  popup.className="levelup";
+  popup.innerText="LEVEL UP!";
+  document.body.appendChild(popup);
+  setTimeout(()=>popup.remove(),1000);
+}
+
+nextQuestion();
+
+// Ultra particle background + Minecraft block explosions
+const canvas=document.getElementById("bg");
+const ctx=canvas.getContext("2d");
+let w,h;
+function resize(){w=canvas.width=window.innerWidth;h=canvas.height=window.innerHeight;}
+window.addEventListener("resize",resize);
+resize();
+
+const stars=Array(300).fill().map(()=>({x:Math.random()*w,y:Math.random()*h,z:Math.random()*w}));
+const blocks=[];
+function animate(){
+  ctx.fillStyle="rgba(0,0,0,0.2)";
+  ctx.fillRect(0,0,w,h);
+
+  // Stars
+  stars.forEach(s=>{
+    s.z-=2;
+    if(s.z<=0)s.z=w;
+    const k=128/s.z;
+    const px=s.x*k+w/2;
+    const py=s.y*k+h/2;
+    if(px>=0&&px<=w&&py>=0&&py<=h){
+      const size=(1-s.z/w)*3;
+      ctx.fillStyle=`hsl(${(s.x+s.y)%360},100%,50%)`;
+      ctx.fillRect(px,py,size,size);
+    }
+  });
+
+  // Blocks
+  blocks.forEach((b,i)=>{
+    b.y+=b.vy;
+    b.x+=b.vx;
+    b.alpha-=0.02;
+    ctx.fillStyle=`rgba(${b.r},${b.g},${b.b},${b.alpha})`;
+    ctx.fillRect(b.x,b.y,b.size,b.size);
+    if(b.alpha<=0)blocks.splice(i,1);
+  });
+
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Explosion on correct answer
+function createExplosion(){
+  for(let i=0;i<50;i++){
+    blocks.push({
+      x:w/2, y:h/2,
+      vx:(Math.random()-0.5)*10,
+      vy:(Math.random()-0.5)*10,
+      size:Math.random()*8+4,
+      r:Math.floor(Math.random()*255),
+      g:Math.floor(Math.random()*255),
+      b:Math.floor(Math.random()*255),
+      alpha:1
+    });
+  }
+}
+</script>
+</body>
+</html>
